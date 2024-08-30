@@ -23,6 +23,8 @@ class Program
     static void Main(string[] args)
     {
 
+        string newFirmwareVersion = GetOnlineFirmwareVersion();
+
         if (!BossacInstalledCheck())
         {
             InstallBossac();
@@ -31,8 +33,16 @@ class Program
         if (IsUpdateRequired())
         {
             DownloadFirmware();
-            UpdateFirmware("COM4");
-           // UpdateLocalVersionFile();
+            UpdateFirmware("COM4"); // IN BRACKETS PLEASE ADD COM PORT!!!!!! THE PORT AFTER ENTERED TO BOOTLOADER MODE!!!!!!!!!
+            if (!string.IsNullOrEmpty(newFirmwareVersion))
+            {
+                UpdateLocalVersionFile(newFirmwareVersion);
+            }
+            else
+            {
+                Console.WriteLine("Failed to retrieve the new firmware version.");
+            }
+
         }
         else
         {
@@ -44,7 +54,7 @@ class Program
     static bool BossacInstalledCheck() {
         // Define the expected path where bossac should be installed
         //string bossacPath = @"C:\Program Files\BOSSA\bossac.exe";
-        string bossacPath = @"C:\Users\logos\.platformio\packages\tool-bossac\bossac.exe";
+        string bossacPath = @"C:\Users\logos\.platformio\packages\tool-bossac\bossac.exe";  //this is for a test
 
 
         // Check if bossac is installed
@@ -248,8 +258,8 @@ class Program
     {
         // Path to the BOSSA executable
         string bossacPath = @"C:\Users\logos\.platformio\packages\tool-bossac\bossac.exe";
-        string customFirmwarePath = @"D:\OFG\Proiect OFG x HardwareMonitor\Vs code\OFG - Vs code\Xiao Seeeduino\.pio\build\seeed_xiao\firmware.bin";
-
+        //string customFirmwarePath = @"D:\OFG\Proiect OFG x HardwareMonitor\Vs code\OFG - Vs code\Xiao Seeeduino\.pio\build\seeed_xiao\firmware.bin"; //this is for a test
+        
         // Ensure COM port is provided
         if (string.IsNullOrWhiteSpace(comPort))
         {
@@ -313,5 +323,27 @@ class Program
             Console.WriteLine("Error updating firmware: " + ex.Message);
         }
     }
+
+    static void UpdateLocalVersionFile(string newVersion)
+{
+    try
+    {
+        // Ensure the directory exists
+        if (!Directory.Exists(firmwareDirectory))
+        {
+            Directory.CreateDirectory(firmwareDirectory);
+        }
+
+        // Write the new version to the local version file
+        File.WriteAllText(localVersionFilePath, $"version={newVersion}");
+
+        Console.WriteLine("Local version file updated to: " + newVersion);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Error updating local version file: " + ex.Message);
+    }
+}
+
 
 }
