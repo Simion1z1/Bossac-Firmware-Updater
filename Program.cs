@@ -2,6 +2,10 @@
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.IO.Ports;
+using System.Linq;
+using System.Threading;
+using System.Management;
 
 
 class Program
@@ -14,40 +18,71 @@ class Program
     private static readonly string localVersionFilePath = Path.Combine(firmwareDirectory, "version.txt");
     private static readonly string firmwareDownloadPath = Path.Combine(firmwareDirectory, "firmware.bin");
 
+    public static string DetectedPort { get; private set; }
+
+    //de adaugat un string 
 
 
-
-
-
-
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
 
-        string newFirmwareVersion = GetOnlineFirmwareVersion();
+        // string newFirmwareVersion = GetOnlineFirmwareVersion(); //uncomment this if you use manual function / GetOnlineFirmwareVersion()  //if I uncomment, it shows me the firmware version, local and uploaded, in cmd
+        /*
+         string detectedPort = DetectNewComPort(); // test the COMPort Connections
+         if (!string.IsNullOrEmpty(detectedPort))
+         {
+             Console.WriteLine("Detected new COM port: " + detectedPort);
+             // You can now proceed with your firmware update process using detectedPort
+         }
+         else
+         {
+             Console.WriteLine("No new COM port detected.");
+         }*/
 
         if (!BossacInstalledCheck())
-        {
-            InstallBossac();
-        }
-
-        if (IsUpdateRequired())
-        {
-            DownloadFirmware();
-            UpdateFirmware("COM4"); // IN BRACKETS PLEASE ADD COM PORT!!!!!! THE PORT AFTER ENTERED TO BOOTLOADER MODE!!!!!!!!!
-            if (!string.IsNullOrEmpty(newFirmwareVersion))
             {
-                UpdateLocalVersionFile(newFirmwareVersion);
+                InstallBossac();
+            }
+
+            if (IsUpdateRequired())
+            {
+                DownloadFirmware();
+
+            //Check Port Automatically and upload the firmware
+            Console.WriteLine("Waiting for device connection...");
+            Console.WriteLine("Please enter in Bootloader Mode");
+
+            // Start detecting the new COM port automatically
+            await DetectNewComPortAutomatically();
+
+            // Now you can use the DetectedPort variable
+            if (!string.IsNullOrEmpty(DetectedPort))
+            {
+                Console.WriteLine("Detected new COM port: " + DetectedPort);
+                // You can now proceed with your firmware update process using DetectedPort
             }
             else
             {
-                Console.WriteLine("Failed to retrieve the new firmware version.");
+                Console.WriteLine("No new COM port detected.");
             }
 
-        }
-        else
-        {
-            Console.WriteLine("Firmware is up-to-date.");
-        }
+
+
+            UpdateFirmware(DetectedPort); // IN BRACKETS PLEASE ADD COM PORT!!!!!! THE PORT AFTER ENTERED TO BOOTLOADER MODE!!!!!!!!!
+                if (!string.IsNullOrEmpty(GetOnlineFirmwareVersion()))
+                {
+                    UpdateLocalVersionFile(GetOnlineFirmwareVersion());
+                }
+                else
+                {
+                    Console.WriteLine("Failed to retrieve the new firmware version.");
+                }
+
+            }
+            else
+            {
+                Console.WriteLine("Firmware is up-to-date.");
+            }
 
     }
 
@@ -345,5 +380,102 @@ class Program
     }
 }
 
+    /*
+    static string DetectNewComPort()
+    {
+        // Get the initial list of COM ports
+        string[] initialPorts = SerialPort.GetPortNames();
 
+        Console.WriteLine("Please plug in your hardware and press Enter...");
+        Console.ReadLine();
+
+        // Wait for the user to plug in the device and the system to recognize it
+        Thread.Sleep(500); // You can adjust this delay if needed
+
+        // Get the updated list of COM ports
+        string[] updatedPorts = SerialPort.GetPortNames();
+
+        // Identify the new COM port
+        string newPort = updatedPorts.Except(initialPorts).FirstOrDefault();
+
+        return newPort;
+    } */ //Version with enter hit (not automatically detected when entered when is reseted/entered to bootloader
+
+
+    /*static void DetectNewComPortAutomatically()
+     {
+        // Get initial list of COM ports
+        string[] initialPorts = SerialPort.GetPortNames();
+
+        // Setup event watcher for when a new COM port is connected
+        var watcher = new ManagementEventWatcher();
+        watcher.Query = new WqlEventQuery("SELECT * FROM Win32_DeviceChangeEvent WHERE EventType = 2");
+        watcher.EventArrived += (sender, eventArgs) =>
+        {
+            // Get the updated list of COM ports
+            string[] updatedPorts = SerialPort.GetPortNames();
+
+            // Identify the new COM port
+            string newPort = updatedPorts.Except(initialPorts).FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(newPort))
+            {
+                Console.WriteLine("Detected new COM port: " + newPort);
+
+                // You can now proceed with your firmware update process using newPort
+
+                // Optionally stop listening after detecting the first port
+                //watcher.Stop();
+
+            }
+        };
+
+        // Start listening for events
+        watcher.Start();
+
+        // Keep the application running to listen for the event
+        Console.WriteLine("Press Enter to exit...");
+        Console.ReadLine();
+    } */
+
+    static Task DetectNewComPortAutomatically()
+    {
+        // Use TaskCompletionSource to handle asynchronous operation
+        var tcs = new TaskCompletionSource<bool>();
+
+        // Get the initial list of COM ports
+        string[] initialPorts = SerialPort.GetPortNames();
+
+        // Setup event watcher for when a new COM port is connected
+        var watcher = new ManagementEventWatcher();
+        watcher.Query = new WqlEventQuery("SELECT * FROM Win32_DeviceChangeEvent WHERE EventType = 2");
+
+        watcher.EventArrived += (sender, eventArgs) =>
+        {
+            // Get the updated list of COM ports
+            string[] updatedPorts = SerialPort.GetPortNames();
+
+            // Identify the new COM port
+            string newPort = updatedPorts.Except(initialPorts).FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(newPort))
+            {
+                // Store the new COM port in the public variable
+                DetectedPort = newPort;
+
+                tcs.SetResult(true);  // Signal that the task is complete
+
+                // Optionally stop listening after detecting the first port
+                watcher.Stop();
+            }
+        };
+
+        // Start listening for events
+        watcher.Start();
+
+        // Return the task that will complete when a new port is detected
+        return tcs.Task;
+    }
 }
+
+
