@@ -20,8 +20,6 @@ class Program
 
     public static string DetectedPort { get; private set; }
 
-    //de adaugat un string 
-
 
     static async Task Main(string[] args)
     {
