@@ -17,6 +17,7 @@ class Program
     private static readonly string firmwareDirectory = Path.Combine(programPath, "Firmware", "G101");
     private static readonly string localVersionFilePath = Path.Combine(firmwareDirectory, "version.txt");
     private static readonly string firmwareDownloadPath = Path.Combine(firmwareDirectory, "firmware.bin");
+    private static readonly string bossacPath = @"C:\Program Files\BOSSA\bossac.exe";
 
     public static string DetectedPort { get; private set; }
 
@@ -86,8 +87,8 @@ class Program
 
     static bool BossacInstalledCheck() {
         // Define the expected path where bossac should be installed
-        //string bossacPath = @"C:\Program Files\BOSSA\bossac.exe";
-        string bossacPath = @"C:\Users\logos\.platformio\packages\tool-bossac\bossac.exe";  //this is for a test
+        //string bossacPath = @"C:\Program Files\BOSSA\bossac.exe"; // Custom Bossac path
+        //string bossacPath = @"C:\Users\logos\.platformio\packages\tool-bossac\bossac.exe";  //this is for a test
 
 
         // Check if bossac is installed
@@ -290,7 +291,7 @@ class Program
     static void UpdateFirmware(string comPort)
     {
         // Path to the BOSSA executable
-        string bossacPath = @"C:\Users\logos\.platformio\packages\tool-bossac\bossac.exe";
+        //string bossacPath = @"C:\Users\logos\.platformio\packages\tool-bossac\bossac.exe"; //custom Bossac Path
         //string customFirmwarePath = @"D:\OFG\Proiect OFG x HardwareMonitor\Vs code\OFG - Vs code\Xiao Seeeduino\.pio\build\seeed_xiao\firmware.bin"; //this is for a test
         
         // Ensure COM port is provided
