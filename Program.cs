@@ -52,7 +52,10 @@ class Program
             Console.WriteLine("Please enter in Bootloader Mode");
 
             // Start detecting the new COM port automatically
+            ConfigureSerialPort("COM6", 1200);  // change the port and baudrate with global variables
             await DetectNewComPortAutomatically();
+
+
 
             // Now you can use the DetectedPort variable
             if (!string.IsNullOrEmpty(DetectedPort))
@@ -475,6 +478,41 @@ class Program
         // Return the task that will complete when a new port is detected
         return tcs.Task;
     }
+
+public static void ConfigureSerialPort(string comPort, int baudRate)
+{
+    try
+    {
+        // Create and configure the serial port
+        using (SerialPort serialPort = new SerialPort(comPort, baudRate))
+        {
+            // Open the serial port
+            serialPort.Open();
+
+            // Optionally, add further configuration like Parity, DataBits, StopBits here if needed
+            // For example:
+            // serialPort.Parity = Parity.None;
+            // serialPort.DataBits = 8;
+            // serialPort.StopBits = StopBits.One;
+
+            // The serial port is now configured and open
+            // Perform actions with the port if necessary
+
+            // Close the serial port (automatic because of 'using')
+        }
+    }
+    catch (IOException ex)
+    {
+        // Handle exceptions like port being unavailable
+        Console.WriteLine($"Error: Unable to open port {comPort}. Details: {ex.Message}");
+    }
+    catch (UnauthorizedAccessException ex)
+    {
+        // Handle access denied error
+        Console.WriteLine($"Access denied to port {comPort}. Details: {ex.Message}");
+    }
+}
+
 }
 
 
