@@ -25,8 +25,8 @@ Ensure your SAM/SAMD21 board is connected to your computer.
 ### 6. Run the Program:
 Execute the firmware updater.
 
-### 7. Enter Bootloader Mode:
-For SAMD21 boards, simply double-press the reset button to enter bootloader mode. The program will automatically recognize the port and upload the firmware.
+### 7. Enter Bootloader Mode: (Not necessary; it just received updates that include automatic bootloader mode entry.)
+For SAMD21 boards, simply double-press the reset button to enter bootloader mode. The program will automatically recognize the port and upload the firmware. 
 
 ### Note: If you don’t already have BOSSA installed, it will be automatically installed in `"C:\Program Files\BOSSA\bossac.exe"`.
 
